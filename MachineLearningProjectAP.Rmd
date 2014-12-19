@@ -1,0 +1,90 @@
+---
+title: Machine Learning for Physical Activity Evaluation
+author: "Andrew Pederson"
+date: "December 18, 2014"
+output: html_document
+---
+
+##Load data 
+```{r, eval=FALSE}
+TestURL <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+TrainURL <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+
+download.file(TrainURL, destfile="./Training.csv", method="curl")
+download.file(TestURL, destfile="./Testing.csv", method="curl")
+```
+```{r}
+setwd("~/Rfiles/PracticalMachineLearnProject")
+TrainingBase <- read.csv("./Training.csv", na.strings=c("","NA","#DIV/0!"))
+FinalTesting <- read.csv("./Testing.csv", na.strings=c("","NA","#DIV/0!"))
+```
+
+##Clean out near zero and NA variables
+Some variables, like the user name and time stamps, are not necessary for our analysis and can be excluded. Others are mostly zero or NA vaules, and thus not likely worthwhile to include as predictors. 
+```{r}
+library(caret)
+nsv <- nearZeroVar(TrainingBase, saveMetrics=TRUE)
+na.prop <- function(x) {
+      sum(is.na(x))/length(x)
+  }
+
+deletevars <- c("X","user_name","raw_timestamp_part_1","raw_timestamp_part_2"
+                ,"cvtd_timestamp", "new_window", "num_window", 
+                rownames(nsv[nsv$zeroVar==TRUE,]), 
+                names(which(sapply(TrainingBase,na.prop)>0.95)))
+
+TrainingBase <- TrainingBase[,-which(names(TrainingBase) %in% deletevars)]
+```
+
+##Split the data into training and test sets
+To avoid overfitting our model, we split the "base" training data set 60/40 into new training and testing sets. 
+
+```{r}
+library(caret)
+set.seed(12345)
+trainIndex = createDataPartition(y=TrainingBase$classe, p = 0.60,list=FALSE)
+training = TrainingBase[trainIndex,]
+testingInit = TrainingBase[-trainIndex,]
+```
+
+##Evaluate and select covariates to use as predictors
+There are still too many variables to plot efficiently, so we use hierarchical clustering to identify some variables of interest in the training set. 
+
+```{r}
+hcluster = hclust(dist(t(training[,2:52])))
+plot(hcluster)
+```
+
+We can see that the magnetometer and accelerometer variables seem to be important in determining clustering, though it's not possible to identify any clear relationships by plotting any of those variables. The plot below illustrates how noisy this data is. 
+
+```{r}
+qplot(magnet_dumbbell_x, magnet_forearm_y, colour=classe, data=training)
+```
+
+##Fitting the model 
+Since no clear linear relationships are visible, we decide to apply a tree-based method. An initial tree model built with the "rpart" method applied to the data preprocessed with a principle components analysis yielded less than 40% accuracy, and was not able to detect Classes B or C at all.
+```{r}
+Prtrain <- trainControl(method="cv", number=5)
+PrcompMod <- train(classe~., data=training, trControl=Prtrain, preProcess="pca", method="rpart")
+
+library(rattle)
+fancyRpartPlot(PrcompMod$finalModel)
+PRpred <- predict(PrcompMod, newdata=testingInit)
+confusionMatrix(PRpred, testingInit$classe)
+```
+
+When we switched to a tree based method with high classification accuracy, Random Forest, however, the model worked well out of the box. Creating the model with 10 fold cross validation was computationally intensive, so the folds were reduced until they had a large effect on accuracy.  3 fold cross validation appears to be sufficient to give the model over 99% accuracy. 
+```{r}
+set.seed(625)
+CV <- trainControl(method="cv",number=3, allowParallel = TRUE)
+RFmodel <- train(classe ~ .,data=training,trControl=CV,method="rf", prox=FALSE)
+RFmodel$finalModel
+```
+
+##Applying the model to the initial test data set
+```{r}
+RFpred <- predict(RFmodel, newdata=testingInit)
+confusionMatrix(RFpred, testingInit$classe)
+```
+
+Accuracy is over 99% when applied to the testing dataset, and the estimated out of sample error rate is less than 1%.
