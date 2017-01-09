@@ -55,13 +55,15 @@ hcluster = hclust(dist(t(training[,2:52])))
 plot(hcluster)
 ```
 
-![dendrogram](http://www.revolunet.com/static/parisjs8/img/logo-revolunet-carre.jpg "Hierarchical Clustering Dendrogram")
+![dendrogram](https://raw.githubusercontent.com/Apeder/MahcineLearningProjAP1214/master/dendrogram.png "Hierarchical Clustering Dendrogram")
 
 We can see that the magnetometer and accelerometer variables seem to be important in determining clustering, though it's not possible to identify any clear relationships by plotting any of those variables. The plot below illustrates how noisy this data is. 
 
 ```{r}
 qplot(magnet_dumbbell_x, magnet_forearm_y, colour=classe, data=training)
 ```
+
+![ExploratoryPlot](https://raw.githubusercontent.com/Apeder/MahcineLearningProjAP1214/master/exploratoryvarplot.png "Exploratory Plot")
 
 ##Fitting the model 
 Since no clear linear relationships are visible, we decide to apply a tree-based method. An initial tree model built with the "rpart" method applied to the data preprocessed with a principle components analysis yielded less than 40% accuracy, and was not able to detect Classes B or C at all.
@@ -76,7 +78,7 @@ PRpred <- predict(PrcompMod, newdata=testingInit)
 confusionMatrix(PRpred, testingInit$classe)
 ```
 
-![rpartplotpca](http://www.revolunet.com/static/parisjs8/img/logo-revolunet-carre.jpg "Rpart Plot with Principle Components Analysis Pre-processing")
+![rpartplotpca](https://raw.githubusercontent.com/Apeder/MahcineLearningProjAP1214/master/rpartplot.png "Rpart Plot with Principle Components Analysis Pre-processing")
 
 ```
 ## Confusion Matrix and Statistics
@@ -174,5 +176,4 @@ confusionMatrix(RFpred, testingInit$classe)
 ## Detection Prevalence   0.2854   0.1927   0.1765   0.1625   0.1829
 ## Balanced Accuracy      0.9984   0.9939   0.9943   0.9915   0.9967
 ```
-
 Accuracy is over 99% when applied to the testing dataset, and the estimated out of sample error rate is less than 1%.
