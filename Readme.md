@@ -5,7 +5,7 @@ date: "December 18, 2014"
 output: html_document
 ---
 
-##Load data 
+## Load data 
 ```{r, eval=FALSE}
 TestURL <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
 TrainURL <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
@@ -19,7 +19,7 @@ TrainingBase <- read.csv("./Training.csv", na.strings=c("","NA","#DIV/0!"))
 FinalTesting <- read.csv("./Testing.csv", na.strings=c("","NA","#DIV/0!"))
 ```
 
-##Clean out near zero and NA variables
+## Clean out near zero and NA variables
 Some variables, like the user name and time stamps, are not necessary for our analysis and can be excluded. Others are mostly zero or NA vaules, and thus not likely worthwhile to include as predictors. 
 ```{r}
 library(caret)
@@ -47,7 +47,7 @@ training = TrainingBase[trainIndex,]
 testingInit = TrainingBase[-trainIndex,]
 ```
 
-##Evaluate and select covariates to use as predictors
+## Evaluate and select covariates to use as predictors
 There are still too many variables to plot efficiently, so we use hierarchical clustering to identify some variables of interest in the training set. 
 
 ```{r}
@@ -65,7 +65,7 @@ qplot(magnet_dumbbell_x, magnet_forearm_y, colour=classe, data=training)
 
 ![ExploratoryPlot](https://raw.githubusercontent.com/Apeder/MahcineLearningProjAP1214/master/exploratoryvarplot.png "Exploratory Plot")
 
-##Fitting the model 
+## Fitting the model 
 Since no clear linear relationships are visible, we decide to apply a tree-based method. An initial tree model built with the "rpart" method applied to the data preprocessed with a principle components analysis yielded less than 40% accuracy, and was not able to detect Classes B or C at all.
 
 ```{r}
@@ -138,7 +138,7 @@ RFmodel$finalModel
 ## E    0    2    6    9 2148 0.007852194
 ```
 
-##Applying the model to the initial test data set
+## Applying the model to the initial test data set
 ```{r}
 RFpred <- predict(RFmodel, newdata=testingInit)
 confusionMatrix(RFpred, testingInit$classe)
