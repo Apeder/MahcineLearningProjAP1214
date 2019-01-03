@@ -36,7 +36,7 @@ deletevars <- c("X","user_name","raw_timestamp_part_1","raw_timestamp_part_2"
 TrainingBase <- TrainingBase[,-which(names(TrainingBase) %in% deletevars)]
 ```
 
-##Split the data into training and test sets
+## Split the data into training and test sets
 To avoid overfitting our model, we split the "base" training data set 60/40 into new training and testing sets. 
 
 ```{r}
